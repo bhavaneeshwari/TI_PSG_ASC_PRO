@@ -12,15 +12,24 @@
 # uart_driver.h
 
    -> include files \
-         -xuartlite.h 
+         -xuartlite.h \
            -> typedef struct XUartlite  -> a variable is allocated **XUartLite Uart;**
             and pointer of this variable for callinf functions \
-           ->  initializing , pointer for varaible   **XUartLite_Initialize(&Uart, XPAR_UARTLITE_0_DEVICE_ID);**
-           ->   **func (XUartLite_Recv(&Uart, (u8 *)&c, 1) == 0);**
-           -> 
-           -> 
-           -> 
-           -> 
+           ->  initializing , pointer for varaible   **XUartLite_Initialize(&Uart, XPAR_UARTLITE_0_DEVICE_ID);** \
+           -> func for receiving data  **XUartLite_Recv(&Uart, (u8 *)&c, 1);** \ RECEIVING 1 BYTES
+           
+           -> func for sending data **XUartLite_Send(&Uart, (u8 *)&c, 1)** \
+ **DEFINED FUNC**
+         -> **char uart_getchar_blocking(void)**  Waits until PC sends ONE character.\
+         -> **int uart_getline(char *buf, int maxlen)**  Keeps receiving characters one by one
+until user presses ENTER (\r or \n)\
+
+           -> **void uart_sendchar(char c)**  Sends ONE character to PC.\
+
+           ->
+           ->
+           ->
+           ->
 
            
         
