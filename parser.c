@@ -15,14 +15,13 @@ static u32 parse_hex(const char *s)
 
     while (*s)
     {
-        val <<= 4;
-
+        /* Shift applied safely only after confirming valid hex char */
         if (*s >= '0' && *s <= '9')
-            val |= (*s - '0');
+            val = (val << 4) | (*s - '0');
         else if (*s >= 'A' && *s <= 'F')
-            val |= (*s - 'A' + 10);
+            val = (val << 4) | (*s - 'A' + 10);
         else if (*s >= 'a' && *s <= 'f')
-            val |= (*s - 'a' + 10);
+            val = (val << 4) | (*s - 'a' + 10);
         else
             break;
 
@@ -82,6 +81,11 @@ void parse_and_store(char *cmd)
         char *len = strtok(NULL, " ");
         if (addr) WRITE32(REG_OPERAND(0), parse_hex(addr));
         if (len)  WRITE32(REG_OPERAND(1), parse_hex(len));
+    }
+    else 
+    {
+        /* Safely handle invalid commands */
+        WRITE8(REG_OPCODE, 0xFF); 
     }
 
     /* Start execution */
