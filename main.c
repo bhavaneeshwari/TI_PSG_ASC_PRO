@@ -35,11 +35,17 @@ int main()
         // Skip empty lines
         if (strlen(cmd_buffer) == 0) continue;
 
+        xil_printf("\r\n  [MAIN] Before Parse: REG_COMMAND = %d\r\n", READ8(REG_COMMAND));
+
         // 2. Parse the string and map to registers
         parse_and_store(cmd_buffer);
 
+        xil_printf("  [MAIN] After Parse:  REG_COMMAND = %d\r\n", READ8(REG_COMMAND));
+
         // 3. Kick off execution logic
         executor_poll();
+
+        xil_printf("  [MAIN] After Exec:   REG_COMMAND = %d\r\n", READ8(REG_COMMAND));
 
         // 4. Print results based on the operation
         u16 status = READ16(REG_STATUS);
