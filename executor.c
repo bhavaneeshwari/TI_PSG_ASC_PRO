@@ -1,12 +1,16 @@
 #include "executor.h"
 #include "axi_regs.h"
 #include "api.h"
+#include "xil_printf.h"
 
 void executor_poll(void)
 {
     if (READ8(REG_COMMAND) == 1)   // START
     {
-        WRITE8(REG_COMMAND, 2);   // BUSY
+        xil_printf("  [EXEC] REG_COMMAND = 1 (START detected)\r\n");
+        
+        WRITE8(REG_COMMAND, 2);    // BUSY
+        xil_printf("  [EXEC] REG_COMMAND = 2 (Processing... BUSY)\r\n");
 
         u8 opcode = READ8(REG_OPCODE);
         u16 status = TI_AFE_RET_EXEC_FAIL; // Default to fail
@@ -17,6 +21,8 @@ void executor_poll(void)
         }
 
         WRITE16(REG_STATUS, status);
-        WRITE8(REG_COMMAND, 0);   // DONE → back to idle
+        
+        WRITE8(REG_COMMAND, 0);    // DONE → back to idle
+        xil_printf("  [EXEC] REG_COMMAND = 0 (Execution DONE -> IDLE)\r\n");
     }
 }
