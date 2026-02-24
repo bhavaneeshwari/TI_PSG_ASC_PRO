@@ -11,10 +11,6 @@
 int main()
 {
 	uart_init();
-    xil_printf("\r\n=======================================\r\n");
-    xil_printf("   TI-PSG API Wrapper Interactive Test \r\n");
-    xil_printf("   (All inputs and outputs are in HEX) \r\n");
-    xil_printf("=======================================\r\n");
     xil_printf("Available Commands:\r\n");
     xil_printf(" - WRITE <hex_addr> <hex_val>\r\n");
     xil_printf(" - READ <hex_addr>\r\n");
