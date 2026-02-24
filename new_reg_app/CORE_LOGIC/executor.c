@@ -5,15 +5,15 @@
 
 void executor_poll(void)
 {
-    if (READ8(REG_COMMAND) == 1)   // START
+    if (READ8(REG_COMMAND) == 1)  
     {
         xil_printf("  [EXEC] REG_COMMAND = 1 (START detected)\r\n");
         
-        WRITE8(REG_COMMAND, 2);    // BUSY
+        WRITE8(REG_COMMAND, 2);    /
         xil_printf("  [EXEC] REG_COMMAND = 2 (Processing... BUSY)\r\n");
 
         u8 opcode = READ8(REG_OPCODE);
-        u16 status = TI_AFE_RET_EXEC_FAIL; // Default to fail
+        u16 status = TI_AFE_RET_EXEC_FAIL; 
 
         if (opcode < API_TABLE_SIZE && api_table[opcode])
         {
@@ -22,7 +22,7 @@ void executor_poll(void)
 
         WRITE16(REG_STATUS, status);
         
-        WRITE8(REG_COMMAND, 0);    // DONE → back to idle
+        WRITE8(REG_COMMAND, 0);   
         xil_printf("  [EXEC] REG_COMMAND = 0 (Execution DONE -> IDLE)\r\n");
     }
 }
