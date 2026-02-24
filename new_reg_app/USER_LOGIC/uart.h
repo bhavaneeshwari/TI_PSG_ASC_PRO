@@ -6,5 +6,4 @@ extern XUartLite Uart;
 void uart_init(void);
 void uart_getline(char *buffer, int max_len);
 
-
 #endif 
