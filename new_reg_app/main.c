@@ -23,25 +23,20 @@ int main()
     {
         xil_printf("\r\nCMD> ");
         
-        // 1. Get string from the user via Putty/TeraTerm
         uart_getline(cmd_buffer, CMD_BUFFER_SIZE);
         
-        // Skip empty lines
         if (strlen(cmd_buffer) == 0) continue;
 
         xil_printf("\r\n  [MAIN] Before Parse: REG_COMMAND = %d\r\n", READ8(REG_COMMAND));
 
-        // 2. Parse the string and map to registers
         parse_and_store(cmd_buffer);
 
         xil_printf("  [MAIN] After Parse:  REG_COMMAND = %d\r\n", READ8(REG_COMMAND));
 
-        // 3. Kick off execution logic
         executor_poll();
 
         xil_printf("  [MAIN] After Exec:   REG_COMMAND = %d\r\n", READ8(REG_COMMAND));
 
-        // 4. Print results based on the operation
         u16 status = READ16(REG_STATUS);
         u8 opcode  = READ8(REG_OPCODE);
 
@@ -62,7 +57,5 @@ int main()
             xil_printf("ERROR: Operation Failed (Status: 0x%04X)\r\n", status);
         }
     }
-
-    //cleanup_platform();
     return 0;
 }
