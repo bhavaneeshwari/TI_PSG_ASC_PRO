@@ -3,7 +3,6 @@
 
 #include "xil_types.h"
 
-/* Status Codes as defined in the TI Spec */
 #define TI_AFE_RET_EXEC_PASS 0x0000
 #define TI_AFE_RET_EXEC_FAIL 0x0001
 
