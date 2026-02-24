@@ -1,11 +1,9 @@
 #include "api.h"
 #include "axi_regs.h"
 
-/* Dummy memory to act as the hardware for testing */
 #define MEM_SIZE 256
 static u32 target_memory[MEM_SIZE] = {0};
 
-/* WRITE: Operand[0] = address, Operand[1] = 32-bit value */
 u16 api_write(void)
 {
     u32 addr = READ32(REG_OPERAND(0));
@@ -17,7 +15,6 @@ u16 api_write(void)
     return TI_AFE_RET_EXEC_PASS;
 }
 
-/* READ: Operand[0] = address -> Result[0] = 32-bit value */
 u16 api_read(void)
 {
     u32 addr = READ32(REG_OPERAND(0));
@@ -30,7 +27,6 @@ u16 api_read(void)
     return TI_AFE_RET_EXEC_PASS;
 }
 
-/* ARRAY_WRITE: Operand[0] = addr, Operand[1] = len, Operand[2..7] = 32-bit data */
 u16 api_array_write(void)
 {
     u32 addr = READ32(REG_OPERAND(0));
@@ -45,7 +41,6 @@ u16 api_array_write(void)
     return TI_AFE_RET_EXEC_PASS;
 }
 
-/* ARRAY_READ: Operand[0] = addr, Operand[1] = len -> Result[0..7] = 32-bit data */
 u16 api_array_read(void)
 {
     u32 addr = READ32(REG_OPERAND(0));
@@ -60,7 +55,6 @@ u16 api_array_read(void)
     return TI_AFE_RET_EXEC_PASS;
 }
 
-/* Dispatch Table */
 api_func_ptr api_table[API_TABLE_SIZE] = {
     api_write,
     api_read,
