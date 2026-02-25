@@ -27,6 +27,7 @@ u16 api_read(void)
     return TI_AFE_RET_EXEC_PASS;
 }
 
+
 u16 api_array_write(void)
 {
     u32 addr = READ32(REG_OPERAND(0));
