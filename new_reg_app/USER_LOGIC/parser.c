@@ -1,89 +1,69 @@
 #include <string.h>
+#include <stdlib.h>
 #include "parser.h"
-#include "../axi_regs.h"
-#include "../corelogic/api.h"
+#include "axi_regs.h"
+#include "corelogic/api.h"
+#include "corelogic/afe_drivers.h" 
 
-static u32 parse_hex(const char *s)
-{
-    u32 val = 0;
+void parse_and_store(char *input) {
+    if (READ_CMD() != 0) return;
 
-    if (!s) return 0;
+    char *cmd = strtok(input, "(");
+    if (!cmd) return;
 
-    if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X'))
-        s += 2;
+    uint8_t opcode = 0xFF; 
 
-    while (*s)
-    {
-        if (*s >= '0' && *s <= '9')
-            val = (val << 4) | (*s - '0');
-        else if (*s >= 'A' && *s <= 'F')
-            val = (val << 4) | (*s - 'A' + 10);
-        else if (*s >= 'a' && *s <= 'f')
-            val = (val << 4) | (*s - 'a' + 10);
-        else
-            break;
+    if (strcmp(cmd, "spiRawWrite") == 0)             opcode = OPCODE_RAW_WRITE;
+    else if (strcmp(cmd, "spiRawRead") == 0)          opcode = OPCODE_RAW_READ;
+    else if (strcmp(cmd, "spiBurstWrite") == 0)       opcode = OPCODE_BURST_WRITE;
+    else if (strcmp(cmd, "spiBurstRead") == 0)        opcode = OPCODE_BURST_READ;
+    else if (strcmp(cmd, "spiRawWriteMulti") == 0)    opcode = OPCODE_RAW_WRITE_MULTI;
+    else if (strcmp(cmd, "spiRawReadMulti") == 0)     opcode = OPCODE_RAW_READ_MULTI;
+    else if (strcmp(cmd, "spiBurstWriteMulti") == 0)  opcode = OPCODE_BURST_WRITE_MULTI;
 
-        s++;
+    if (opcode == 0xFF) {
+        WRITE_OPCODE(0xFF);                  
+        WRITE_STATUS(TI_AFE_RET_EXEC_FAIL);  
+        WRITE_CMD(0);                        
+        return;                              
     }
 
-    return val;
-}
+    char *arg_string = strtok(NULL, ")");
+    if (!arg_string) return;
 
-void parse_and_store(char *cmd)
-{
-   
-    if (READ8(REG_COMMAND) != 0) return;
+    char *token = strtok(arg_string, ",");
+    uint32_t hw_offset = 0;
+    int arg_index = 0;
 
-    char *tok = strtok(cmd, " ");
-    if (!tok) return;
+    while (token != NULL) {
+        if (hw_offset >= 31) break; 
 
-    if (!strcmp(tok, "WRITE"))
-    {
-        WRITE8(REG_OPCODE, OPCODE_WRITE);
-        char *addr = strtok(NULL, " ");
-        char *val = strtok(NULL, " ");
-        if (addr) WRITE32(REG_OPERAND(0), parse_hex(addr));
-        if (val)  WRITE32(REG_OPERAND(1), parse_hex(val));
-    }
-    else if (!strcmp(tok, "READ"))
-    {
-        WRITE8(REG_OPCODE, OPCODE_READ);
-        char *addr = strtok(NULL, " ");
-        if (addr) WRITE32(REG_OPERAND(0), parse_hex(addr));
-    }
-    else if (!strcmp(tok, "ARRAY_WRITE"))
-    {
-        WRITE8(REG_OPCODE, OPCODE_ARRAY_WRITE);
-        char *addr = strtok(NULL, " ");
-        char *len = strtok(NULL, " ");
-        if (addr && len) 
-        {
-            WRITE32(REG_OPERAND(0), parse_hex(addr));
-            u32 length = parse_hex(len);
-            
-            if (length > 6) length = 6; 
-            WRITE32(REG_OPERAND(1), length);
-            
-            for (u32 i = 0; i < length; i++) {
-                char *data = strtok(NULL, " ");
-                if (data) WRITE32(REG_OPERAND(2 + i), parse_hex(data));
-                else break;
+        while (*token == ' ') token++; 
+        uint32_t val = (uint32_t)strtoul(token, NULL, 16);
+
+        if (arg_index == 0) {
+            HW_OPERAND_BASE[hw_offset++] = (uint8_t)(val & 0xFF);
+        }
+        else if (arg_index == 1) {
+            HW_OPERAND_BASE[hw_offset++] = (uint8_t)(val & 0xFF);        
+            HW_OPERAND_BASE[hw_offset++] = (uint8_t)((val >> 8) & 0xFF); 
+        }
+        else if (arg_index == 2) {
+            if (opcode == OPCODE_BURST_WRITE || opcode == OPCODE_BURST_READ || opcode == OPCODE_BURST_WRITE_MULTI) {
+                HW_OPERAND_BASE[hw_offset++] = (uint8_t)(val & 0xFF);        
+                HW_OPERAND_BASE[hw_offset++] = (uint8_t)((val >> 8) & 0xFF); 
+            } else {
+                HW_OPERAND_BASE[hw_offset++] = (uint8_t)(val & 0xFF);
             }
         }
-    }
-    else if (!strcmp(tok, "ARRAY_READ"))
-    {
-        WRITE8(REG_OPCODE, OPCODE_ARRAY_READ);
-        char *addr = strtok(NULL, " ");
-        char *len = strtok(NULL, " ");
-        if (addr) WRITE32(REG_OPERAND(0), parse_hex(addr));
-        if (len)  WRITE32(REG_OPERAND(1), parse_hex(len));
-    }
-    else 
-    {
-
-        WRITE8(REG_OPCODE, 0xFF); 
+        else {
+            HW_OPERAND_BASE[hw_offset++] = (uint8_t)(val & 0xFF);
+        }
+        
+        token = strtok(NULL, ",");
+        arg_index++;
     }
 
-    WRITE8(REG_COMMAND, 1);
+    WRITE_OPCODE(opcode);
+    WRITE_CMD(1); 
 }
