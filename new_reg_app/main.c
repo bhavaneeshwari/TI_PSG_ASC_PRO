@@ -1,60 +1,76 @@
 #include <stdio.h>
 #include <string.h>
 #include "xil_printf.h"
-#include "userlogic/parser.h"
-#include "corelogic/executor.h"
 #include "axi_regs.h"
 #include "userlogic/uart.h"
+#include "userlogic/parser.h"
+#include "corelogic/executor.h"
 #include "corelogic/api.h"
+#include "corelogic/afe_drivers.h"
+
 #define CMD_BUFFER_SIZE 128
+
+#define GET_HW_U16(base, offset) (uint16_t)( \
+    (base[offset] & 0xFF) | \
+    ((base[offset + 1] & 0xFF) << 8) \
+)
+
+void print_help() {
+    xil_printf("\r\n--- Command Input Formats (Hex) ---\r\n");
+    xil_printf("1. Raw Write:   spiRawWrite(Inst, Addr, Data)\r\n");
+    xil_printf("2. Raw Read:    spiRawRead(Inst, Addr)\r\n");
+    xil_printf("3. Burst Write: spiBurstWrite(Inst, Addr, Size, D0, D1...)\r\n");
+    xil_printf("4. Burst Read:  spiBurstRead(Inst, Addr, Size)\r\n");
+    xil_printf("5. Multi Write: spiRawWriteMulti(Sel, Addr, Data)\r\n");
+    xil_printf("6. Multi Read:  spiRawReadMulti(Sel, Addr)\r\n");
+    xil_printf("7. Multi Burst: spiBurstWriteMulti(Sel, Addr, Size, D0, D1...)\r\n");
+    xil_printf("-----------------------------------\r\n");
+}
 
 int main()
 {
-	uart_init();
-    xil_printf("Available Commands:\r\n");
-    xil_printf(" - WRITE <hex_addr> <hex_val>\r\n");
-    xil_printf(" - READ <hex_addr>\r\n");
-    xil_printf(" - ARRAY_WRITE <hex_addr> <hex_len> <hex_val1> <hex_val2>...\r\n");
-    xil_printf(" - ARRAY_READ <hex_addr> <hex_len>\r\n");
-    
+    print_help();
+
     char cmd_buffer[CMD_BUFFER_SIZE];
 
     while (1) 
     {
         xil_printf("\r\nCMD> ");
-        
         uart_getline(cmd_buffer, CMD_BUFFER_SIZE);
         
         if (strlen(cmd_buffer) == 0) continue;
 
-        xil_printf("\r\n  [MAIN] Before Parse: REG_COMMAND = %d\r\n", READ8(REG_COMMAND));
-
         parse_and_store(cmd_buffer);
-
-        xil_printf("  [MAIN] After Parse:  REG_COMMAND = %d\r\n", READ8(REG_COMMAND));
-
         executor_poll();
 
-        xil_printf("  [MAIN] After Exec:   REG_COMMAND = %d\r\n", READ8(REG_COMMAND));
-
-        u16 status = READ16(REG_STATUS);
-        u8 opcode  = READ8(REG_OPCODE);
+        u16 status = READ_STATUS();
+        u8 opcode  = READ_OPCODE();
 
         if (status == TI_AFE_RET_EXEC_PASS) {
-            xil_printf("SUCCESS (Status: 0x%04X)\r\n", status);
+            xil_printf("[MAIN] SUCCESS: Opcode 0x%02X\r\n", opcode);
             
-            if (opcode == OPCODE_READ) {
-                xil_printf(" -> Value Read: 0x%08lX\r\n", READ32(REG_RESULT(0)));
-            } 
-            else if (opcode == OPCODE_ARRAY_READ) {
-                u32 len = READ32(REG_OPERAND(1));
-                xil_printf(" -> Array Data Read:\r\n");
-                for (u32 i = 0; i < len; i++) {
-                    xil_printf("    Result[%lu] = 0x%08lX\r\n", i, READ32(REG_RESULT(i)));
+            if (opcode == OPCODE_RAW_READ) {
+                xil_printf("   -> Result: 0x%02X\r\n", HW_RESULT_BASE[0]);
+            }
+            else if (opcode == OPCODE_RAW_READ_MULTI) {
+                for (int i = 0; i < NUM_SPI; i++) {
+                    xil_printf("      SPI[%d]: 0x%02X\r\n", i, HW_RESULT_BASE[i]);
                 }
             }
-        } else {
-            xil_printf("ERROR: Operation Failed (Status: 0x%04X)\r\n", status);
+            else if (opcode == OPCODE_BURST_READ) {
+                uint16_t size = GET_HW_U16(HW_OPERAND_BASE, 3);
+                xil_printf("   -> Burst Data:\r\n");
+                for (uint16_t i = 0; i < size; i++) {
+                    xil_printf("	Data [%d]: 0x%02X\r\n", i, HW_RESULT_BASE[i]);
+                }
+            }
+        } 
+        else if (opcode != 0xFF) {
+            xil_printf("[MAIN] ERROR: Failed (0x%04X)\r\n", status);
+        } 
+        else {
+            xil_printf("[MAIN] ERROR: Unknown Command Syntax.\r\n");
+            print_help();
         }
     }
     return 0;
