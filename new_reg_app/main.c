@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include "platform.h"
 #include "xil_printf.h"
 #include "axi_regs.h"
 #include "userlogic/uart.h"
@@ -10,6 +11,7 @@
 
 #define CMD_BUFFER_SIZE 128
 
+// Little Endian HW Extraction Macro
 #define GET_HW_U16(base, offset) (uint16_t)( \
     (base[offset] & 0xFF) | \
     ((base[offset + 1] & 0xFF) << 8) \
@@ -29,6 +31,10 @@ void print_help() {
 
 int main()
 {
+    init_platform(); 
+    
+    uart_init();   
+
     print_help();
 
     char cmd_buffer[CMD_BUFFER_SIZE];
@@ -61,7 +67,7 @@ int main()
                 uint16_t size = GET_HW_U16(HW_OPERAND_BASE, 3);
                 xil_printf("   -> Burst Data:\r\n");
                 for (uint16_t i = 0; i < size; i++) {
-                    xil_printf("	Data [%d]: 0x%02X\r\n", i, HW_RESULT_BASE[i]);
+                    xil_printf("      [%d]: 0x%02X\r\n", i, HW_RESULT_BASE[i]);
                 }
             }
         } 
@@ -73,5 +79,7 @@ int main()
             print_help();
         }
     }
+    
+    cleanup_platform();
     return 0;
 }
