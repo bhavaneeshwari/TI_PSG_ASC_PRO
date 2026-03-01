@@ -7,6 +7,10 @@
 
 void parse_and_store(char *input) {
     if (READ_CMD() != 0) return;
+    
+    for (int i = 0; i < 32; i++) {
+        HW_OPERAND_BASE[i] = 0x00;
+    }
 
     char *cmd = strtok(input, "(");
     if (!cmd) return;
