@@ -6,7 +6,7 @@
 #include "userlogic/uart.h"
 #include "userlogic/parser.h"
 #include "corelogic/executor.h"
-#include "corelogic/api.h"
+#include "corelogic/api_wrapper.h"
 #include "corelogic/afe_drivers.h"
 
 #define CMD_BUFFER_SIZE 128
