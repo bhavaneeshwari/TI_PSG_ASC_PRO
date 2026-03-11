@@ -1,5 +1,5 @@
-#ifndef API_H
-#define API_H
+#ifndef API_WRAPPER_H
+#define API__WRAPPER_H
 
 #include "xil_types.h"
 
