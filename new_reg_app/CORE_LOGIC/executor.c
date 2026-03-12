@@ -1,6 +1,6 @@
 #include "executor.h"
 #include "axi_regs.h"
-#include "api.h"
+#include "api_wrapper.h"
 
 void executor_poll(void) {
     if (READ_CMD() == 1) {
