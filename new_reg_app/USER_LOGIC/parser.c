@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "parser.h"
 #include "axi_regs.h"
-#include "corelogic/api.h"
+#include "corelogic/api_wrapper.h"
 #include "corelogic/afe_drivers.h" 
 
 void parse_and_store(char *input) {
